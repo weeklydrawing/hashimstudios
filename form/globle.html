@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BtrccGloble</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Unbounded:wght@300;400;600;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020b18;
+    --surface: #071828;
+    --surface2: #0c2340;
+    --border: #1a3a5c;
+    --accent: #1e8bff;
+    --accent2: #00d4ff;
+    --glow: #1e8bff55;
+    --text: #c8e6ff;
+    --text-dim: #5a8ab0;
+    --cold: #0a3a6e;
+    --warm1: #0f5fa8;
+    --warm2: #1a8fd4;
+    --warm3: #00c8ff;
+    --hot: #00eeff;
+    --win: #00ff88;
+    --font-display: 'Unbounded', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated starfield background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, #ffffff22, transparent),
+      radial-gradient(1px 1px at 80% 10%, #4af3ff33, transparent),
+      radial-gradient(1px 1px at 40% 70%, #ffffff18, transparent),
+      radial-gradient(1px 1px at 60% 50%, #1e8bff22, transparent),
+      radial-gradient(1px 1px at 10% 80%, #ffffff1a, transparent),
+      radial-gradient(1px 1px at 90% 60%, #00d4ff22, transparent),
+      radial-gradient(1px 1px at 50% 20%, #ffffff15, transparent),
+      radial-gradient(2px 2px at 70% 80%, #1e8bff18, transparent);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 400px;
+    background: radial-gradient(ellipse, #1e8bff08 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 0 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+
+  .logo {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    filter: drop-shadow(0 0 20px var(--accent));
+  }
+
+  .header-btns {
+    display: flex;
+    gap: 10px;
+  }
+
+  .icon-btn {
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-size: 16px;
+    transition: all 0.2s;
+  }
+
+  .icon-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent2);
+    background: var(--surface2);
+    box-shadow: 0 0 12px var(--glow);
+  }
+
+  /* Globe SVG area */
+  .globe-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+
+  #globe-svg {
+    width: 320px;
+    height: 320px;
+    filter: drop-shadow(0 0 40px #1e8bff22);
+    transition: filter 0.5s;
+  }
+
+  #globe-svg.pulse {
+    filter: drop-shadow(0 0 60px #00d4ff66);
+  }
+
+  /* Day counter */
+  .day-tag {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-top: 12px;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-pill {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    transition: border-color 0.3s;
+  }
+
+  .stat-pill:hover { border-color: var(--accent); }
+
+  .stat-val {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--accent2);
+    display: block;
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 4px;
+    display: block;
+  }
+
+  /* Search box */
+  .search-wrap {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  #country-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 56px 16px 20px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  #country-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--glow), inset 0 0 20px #1e8bff08;
+  }
+
+  #country-input::placeholder { color: var(--text-dim); }
+
+  #submit-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #fff;
+    transition: all 0.2s;
+    box-shadow: 0 0 16px var(--glow);
+  }
+
+  #submit-btn:hover {
+    transform: translateY(-50%) scale(1.05);
+    box-shadow: 0 0 24px #1e8bffaa;
+  }
+
+  /* Autocomplete dropdown */
+  #autocomplete {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    z-index: 100;
+    overflow: hidden;
+    box-shadow: 0 12px 40px #00000088;
+    display: none;
+  }
+
+  .autocomplete-item {
+    padding: 11px 18px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text);
+  }
+
+  .autocomplete-item:hover, .autocomplete-item.active {
+    background: var(--surface2);
+    color: var(--accent2);
+  }
+
+  .autocomplete-item .flag { font-size: 18px; }
+
+  /* Guesses list */
+  .guesses-header {
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .guess-count {
+    font-family: var(--font-display);
+    font-size: 11px;
+    color: var(--accent);
+  }
+
+  #guesses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .guess-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    animation: slideIn 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  @keyframes slideIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .guess-flag { font-size: 22px; width: 30px; text-align: center; }
+
+  .guess-name {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+
+  .guess-heat {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    border: 1px solid transparent;
+    transition: box-shadow 0.5s;
+  }
+
+  .guess-dist {
+    text-align: right;
+    min-width: 80px;
+  }
+
+  .guess-dist .km {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    display: block;
+  }
+
+  .guess-dist .dir {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* Heat colors */
+  .heat-0 { background: #060e1a; border-color: #0d2035; color: #2a5a8a; }
+  .heat-1 { background: #041a3a; border-color: #0a3060; color: #1e6bb0; }
+  .heat-2 { background: #05225a; border-color: #0b3a8a; color: #2a8ad4; }
+  .heat-3 { background: #063080; border-color: #1050b0; color: #40a0e0; }
+  .heat-4 { background: #0840aa; border-color: #1468d0; color: #50c0f8; }
+  .heat-5 { background: #0a50d4; border-color: #1880f0; color: #7ad4ff; }
+  .heat-6 { background: #0c60e8; border-color: #2090ff; color: #a0e4ff; }
+  .heat-7 { background: #0070ff; border-color: #30a8ff; color: #c0f0ff; }
+  .heat-8 { background: #00a0ff; border-color: #40c8ff; color: #e0f8ff; }
+  .heat-hot { background: #00d4ff22; border-color: var(--hot); color: var(--hot); box-shadow: 0 0 20px #00eeff88; }
+  .heat-win { background: #00ff8822; border-color: var(--win); color: var(--win); box-shadow: 0 0 20px #00ff8888; }
+
+  /* Win banner */
+  #win-banner {
+    display: none;
+    background: linear-gradient(135deg, #003a20, #001a3a);
+    border: 1px solid var(--win);
+    border-radius: 16px;
+    padding: 24px 28px;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: 0 0 40px #00ff8828;
+    animation: slideIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  #win-banner.show { display: block; }
+
+  .win-title {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--win);
+    letter-spacing: -1px;
+    margin-bottom: 6px;
+  }
+
+  .win-sub {
+    color: #80ffbb;
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+
+  .win-country {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    margin: 12px 0 8px;
+  }
+
+  /* Error toast */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1a0a0a;
+    border: 1px solid #ff4455;
+    color: #ff8899;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 13px;
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+  }
+
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* How to play modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000000cc;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    max-width: 440px;
+    width: 90%;
+    box-shadow: 0 24px 80px #00000088;
+  }
+
+  .modal h2 {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--accent2);
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+
+  .modal p {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.8;
+    margin-bottom: 12px;
+  }
+
+  .heat-legend {
+    display: flex;
+    gap: 6px;
+    margin: 14px 0;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .legend-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+  }
+
+  .modal-close {
+    margin-top: 20px;
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 13px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+
+  .modal-close:hover { opacity: 0.85; }
+
+  /* Globe rotating animation */
+  @keyframes globeSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .globe-land { transition: fill 0.8s ease; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="logo">BtrccGloble</div>
+    <div class="header-btns">
+      <button class="icon-btn" id="how-btn" title="How to play">?</button>
+      <button class="icon-btn" id="new-btn" title="New game">↺</button>
+    </div>
+  </header>
+
+  <div class="globe-area">
+    <svg id="globe-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="globeGrad" cx="40%" cy="35%">
+          <stop offset="0%" stop-color="#0d3a6a"/>
+          <stop offset="60%" stop-color="#061828"/>
+          <stop offset="100%" stop-color="#020b14"/>
+        </radialGradient>
+        <radialGradient id="glowGrad" cx="50%" cy="50%">
+          <stop offset="70%" stop-color="transparent"/>
+          <stop offset="100%" stop-color="#1e8bff18"/>
+        </radialGradient>
+        <clipPath id="circle-clip">
+          <circle cx="200" cy="200" r="168"/>
+        </clipPath>
+        <filter id="glow-filter">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <!-- Globe base -->
+      <circle cx="200" cy="200" r="172" fill="#1e8bff10" stroke="#1e8bff30" stroke-width="1"/>
+      <circle cx="200" cy="200" r="168" fill="url(#globeGrad)"/>
+      <!-- Grid lines -->
+      <g clip-path="url(#circle-clip)" opacity="0.15" stroke="#4af3ff" stroke-width="0.5" fill="none">
+        <ellipse cx="200" cy="200" rx="168" ry="56"/>
+        <ellipse cx="200" cy="200" rx="168" ry="112"/>
+        <ellipse cx="200" cy="200" rx="120" ry="168"/>
+        <ellipse cx="200" cy="200" rx="60" ry="168"/>
+        <line x1="200" y1="32" x2="200" y2="368"/>
+        <line x1="32" y1="200" x2="368" y2="200"/>
+      </g>
+      <!-- Stylized land masses -->
+      <g id="globe-lands" clip-path="url(#circle-clip)">
+        <!-- North America -->
+        <path class="globe-land" id="land-na" d="M80,120 Q100,100 130,105 L150,90 Q170,80 185,95 L190,115 Q200,125 195,140 L185,160 Q175,180 160,185 L140,195 Q120,200 105,185 L90,165 Q75,145 80,120Z" fill="#0d3060" stroke="#1e5a9a" stroke-width="0.8"/>
+        <!-- South America -->
+        <path class="globe-land" id="land-sa" d="M145,220 Q165,215 180,225 L188,240 Q192,260 188,285 L175,310 Q160,325 148,315 L138,295 Q130,270 133,248 L145,220Z" fill="#0d3060" stroke="#1e5a9a" stroke-width="0.8"/>
+        <!-- Europe -->
+        <path class="globe-land" id="land-eu" d="M205,100 Q220,90 240,95 L255,105 Q265,115 260,128 L248,138 Q235,145 222,140 L210,130 Q200,118 205,100Z" fill="#0d3060" stroke="#1e5a9a" stroke-width="0.8"/>
+        <!-- Africa -->
+        <path class="globe-land" id="land-af" d="M215,155 Q235,148 250,155 L260,170 Q268,190 265,215 L255,240 Q242,258 228,258 L218,245 Q208,225 207,200 L210,175 Q212,162 215,155Z" fill="#0d3060" stroke="#1e5a9a" stroke-width="0.8"/>
+        <!-- Asia -->
+        <path class="globe-land" id="land-as" d="M265,85 Q295,78 325,88 L348,100 Q360,115 355,132 L340,148 Q318,160 295,158 L270,150 Q250,138 248,120 L255,100 Q260,88 265,85Z" fill="#0d3060" stroke="#1e5a9a" stroke-width="0.8"/>
+        <!-- Australia -->
+        <path class="globe-land" id="land-au" d="M305,245 Q328,238 345,248 L352,265 Q355,282 345,292 L328,298 Q312,296 303,282 L300,265 Q300,250 305,245Z" fill="#0d3060" stroke="#1e5a9a" stroke-width="0.8"/>
+      </g>
+      <!-- Atmosphere glow -->
+      <circle cx="200" cy="200" r="168" fill="url(#glowGrad)"/>
+      <!-- Specular highlight -->
+      <ellipse cx="155" cy="145" rx="45" ry="30" fill="#ffffff05" transform="rotate(-25,155,145)"/>
+      <circle cx="200" cy="200" r="172" fill="none" stroke="#1e8bff" stroke-width="1.5" opacity="0.6"/>
+    </svg>
+    <div class="day-tag" id="day-tag">DAILY CHALLENGE</div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-pill">
+      <span class="stat-val" id="stat-guesses">0</span>
+      <span class="stat-label">Guesses</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-val" id="stat-streak">—</span>
+      <span class="stat-label">Streak</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-val" id="stat-played">0</span>
+      <span class="stat-label">Played</span>
+    </div>
+  </div>
+
+  <div id="win-banner">
+    <div class="win-title">🎉 YOU GOT IT!</div>
+    <div class="win-sub">THE MYSTERY COUNTRY WAS</div>
+    <div class="win-country" id="win-country-name"></div>
+    <div class="win-sub" id="win-in-guesses"></div>
+  </div>
+
+  <div class="search-wrap">
+    <input type="text" id="country-input" placeholder="Type a country name…" autocomplete="off" spellcheck="false"/>
+    <button id="submit-btn">→</button>
+    <div id="autocomplete"></div>
+  </div>
+
+  <div class="guesses-header">
+    <span>Your Guesses</span>
+    <span class="guess-count" id="guess-count-label">0 guesses</span>
+  </div>
+  <div id="guesses-list"></div>
+</div>
+
+<!-- How to play modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h2>How to Play</h2>
+    <p>Guess the hidden mystery country! Each guess will reveal how close you are to the target.</p>
+    <p>The globe will light up with a <strong style="color:var(--accent2)">heat colour</strong> based on distance:</p>
+    <div class="heat-legend">
+      <div class="legend-dot heat-0">❄</div>
+      <div class="legend-dot heat-2">〰</div>
+      <div class="legend-dot heat-4">◎</div>
+      <div class="legend-dot heat-6">◉</div>
+      <div class="legend-dot heat-hot">🔥</div>
+      <div class="legend-dot heat-win">✓</div>
+    </div>
+    <p>Dark blue = far away · Bright cyan = very close · 🔥 = neighbouring country</p>
+    <p>Arrows show the direction of the mystery country from your guess.</p>
+    <p>There are no limits — guess as many times as you need!</p>
+    <button class="modal-close" id="modal-close">LET'S PLAY →</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── Country Data ─────────────────────────────────────────────────────────────
+const COUNTRIES = [
+  {name:"Afghanistan",flag:"🇦🇫",lat:33,lng:65},
+  {name:"Albania",flag:"🇦🇱",lat:41,lng:20},
+  {name:"Algeria",flag:"🇩🇿",lat:28,lng:3},
+  {name:"Angola",flag:"🇦🇴",lat:-11.2,lng:17.9},
+  {name:"Argentina",flag:"🇦🇷",lat:-34,lng:-64},
+  {name:"Armenia",flag:"🇦🇲",lat:40,lng:45},
+  {name:"Australia",flag:"🇦🇺",lat:-25,lng:133},
+  {name:"Austria",flag:"🇦🇹",lat:47.3,lng:13.3},
+  {name:"Azerbaijan",flag:"🇦🇿",lat:40.1,lng:47.6},
+  {name:"Bahamas",flag:"🇧🇸",lat:24,lng:-76},
+  {name:"Bahrain",flag:"🇧🇭",lat:26,lng:50.5},
+  {name:"Bangladesh",flag:"🇧🇩",lat:23.7,lng:90.4},
+  {name:"Belarus",flag:"🇧🇾",lat:53.7,lng:27.9},
+  {name:"Belgium",flag:"🇧🇪",lat:50.5,lng:4.5},
+  {name:"Belize",flag:"🇧🇿",lat:17.2,lng:-88.5},
+  {name:"Benin",flag:"🇧🇯",lat:9.3,lng:2.3},
+  {name:"Bolivia",flag:"🇧🇴",lat:-17,lng:-65},
+  {name:"Bosnia and Herzegovina",flag:"🇧🇦",lat:44,lng:17.5},
+  {name:"Botswana",flag:"🇧🇼",lat:-22,lng:24},
+  {name:"Brazil",flag:"🇧🇷",lat:-10,lng:-53},
+  {name:"Bulgaria",flag:"🇧🇬",lat:42.7,lng:25.5},
+  {name:"Burkina Faso",flag:"🇧🇫",lat:13,lng:-2},
+  {name:"Burundi",flag:"🇧🇮",lat:-3.4,lng:30},
+  {name:"Cambodia",flag:"🇰🇭",lat:12.6,lng:104.9},
+  {name:"Cameroon",flag:"🇨🇲",lat:6,lng:12.3},
+  {name:"Canada",flag:"🇨🇦",lat:60,lng:-95},
+  {name:"Central African Republic",flag:"🇨🇫",lat:7,lng:21},
+  {name:"Chad",flag:"🇹🇩",lat:15,lng:19},
+  {name:"Chile",flag:"🇨🇱",lat:-30,lng:-71},
+  {name:"China",flag:"🇨🇳",lat:35,lng:105},
+  {name:"Colombia",flag:"🇨🇴",lat:4,lng:-72},
+  {name:"Congo",flag:"🇨🇬",lat:-1,lng:15.8},
+  {name:"Costa Rica",flag:"🇨🇷",lat:9.7,lng:-84},
+  {name:"Croatia",flag:"🇭🇷",lat:45.1,lng:15.2},
+  {name:"Cuba",flag:"🇨🇺",lat:21.5,lng:-80},
+  {name:"Cyprus",flag:"🇨🇾",lat:35,lng:33},
+  {name:"Czech Republic",flag:"🇨🇿",lat:49.8,lng:15.5},
+  {name:"Denmark",flag:"🇩🇰",lat:56,lng:10},
+  {name:"Dominican Republic",flag:"🇩🇴",lat:19,lng:-70.2},
+  {name:"DR Congo",flag:"🇨🇩",lat:-4,lng:24.5},
+  {name:"Ecuador",flag:"🇪🇨",lat:-2,lng:-77.5},
+  {name:"Egypt",flag:"🇪🇬",lat:26,lng:30},
+  {name:"El Salvador",flag:"🇸🇻",lat:13.8,lng:-88.9},
+  {name:"Eritrea",flag:"🇪🇷",lat:15,lng:39},
+  {name:"Estonia",flag:"🇪🇪",lat:58.7,lng:25.0},
+  {name:"Ethiopia",flag:"🇪🇹",lat:8,lng:38},
+  {name:"Finland",flag:"🇫🇮",lat:64,lng:26},
+  {name:"France",flag:"🇫🇷",lat:46,lng:2},
+  {name:"Gabon",flag:"🇬🇦",lat:-1,lng:11.8},
+  {name:"Georgia",flag:"🇬🇪",lat:42,lng:43.5},
+  {name:"Germany",flag:"🇩🇪",lat:51,lng:9},
+  {name:"Ghana",flag:"🇬🇭",lat:7.9,lng:-1.0},
+  {name:"Greece",flag:"🇬🇷",lat:39,lng:22},
+  {name:"Guatemala",flag:"🇬🇹",lat:15.5,lng:-90.2},
+  {name:"Guinea",flag:"🇬🇳",lat:11,lng:-10.9},
+  {name:"Haiti",flag:"🇭🇹",lat:19,lng:-72.3},
+  {name:"Honduras",flag:"🇭🇳",lat:15,lng:-86.5},
+  {name:"Hungary",flag:"🇭🇺",lat:47,lng:19.5},
+  {name:"Iceland",flag:"🇮🇸",lat:65,lng:-18},
+  {name:"India",flag:"🇮🇳",lat:20,lng:77},
+  {name:"Indonesia",flag:"🇮🇩",lat:-5,lng:120},
+  {name:"Iran",flag:"🇮🇷",lat:32,lng:53},
+  {name:"Iraq",flag:"🇮🇶",lat:33,lng:44},
+  {name:"Ireland",flag:"🇮🇪",lat:53.1,lng:-8.2},
+  {name:"Israel",flag:"🇮🇱",lat:31.5,lng:34.8},
+  {name:"Italy",flag:"🇮🇹",lat:42.8,lng:12.8},
+  {name:"Ivory Coast",flag:"🇨🇮",lat:7.5,lng:-5.5},
+  {name:"Jamaica",flag:"🇯🇲",lat:18,lng:-77},
+  {name:"Japan",flag:"🇯🇵",lat:36,lng:138},
+  {name:"Jordan",flag:"🇯🇴",lat:31,lng:36},
+  {name:"Kazakhstan",flag:"🇰🇿",lat:48,lng:68},
+  {name:"Kenya",flag:"🇰🇪",lat:0,lng:38},
+  {name:"Kosovo",flag:"🇽🇰",lat:42.6,lng:20.9},
+  {name:"Kuwait",flag:"🇰🇼",lat:29.3,lng:47.7},
+  {name:"Kyrgyzstan",flag:"🇰🇬",lat:41,lng:75},
+  {name:"Laos",flag:"🇱🇦",lat:18,lng:103},
+  {name:"Latvia",flag:"🇱🇻",lat:57,lng:25},
+  {name:"Lebanon",flag:"🇱🇧",lat:33.9,lng:35.9},
+  {name:"Liberia",flag:"🇱🇷",lat:6.4,lng:-9.4},
+  {name:"Libya",flag:"🇱🇾",lat:27,lng:17},
+  {name:"Lithuania",flag:"🇱🇹",lat:56,lng:24},
+  {name:"Luxembourg",flag:"🇱🇺",lat:49.8,lng:6.1},
+  {name:"Madagascar",flag:"🇲🇬",lat:-20,lng:47},
+  {name:"Malawi",flag:"🇲🇼",lat:-13.5,lng:34},
+  {name:"Malaysia",flag:"🇲🇾",lat:2.5,lng:112.5},
+  {name:"Mali",flag:"🇲🇱",lat:17,lng:-4},
+  {name:"Mauritania",flag:"🇲🇷",lat:20,lng:-12},
+  {name:"Mexico",flag:"🇲🇽",lat:23.6,lng:-102.5},
+  {name:"Moldova",flag:"🇲🇩",lat:47.4,lng:28.4},
+  {name:"Mongolia",flag:"🇲🇳",lat:46.9,lng:103.8},
+  {name:"Montenegro",flag:"🇲🇪",lat:42.7,lng:19.4},
+  {name:"Morocco",flag:"🇲🇦",lat:32,lng:-5},
+  {name:"Mozambique",flag:"🇲🇿",lat:-18.7,lng:35.5},
+  {name:"Myanmar",flag:"🇲🇲",lat:17,lng:96},
+  {name:"Namibia",flag:"🇳🇦",lat:-22,lng:17},
+  {name:"Nepal",flag:"🇳🇵",lat:28,lng:84},
+  {name:"Netherlands",flag:"🇳🇱",lat:52.1,lng:5.3},
+  {name:"New Zealand",flag:"🇳🇿",lat:-41,lng:174},
+  {name:"Nicaragua",flag:"🇳🇮",lat:13,lng:-85.2},
+  {name:"Niger",flag:"🇳🇪",lat:17,lng:8},
+  {name:"Nigeria",flag:"🇳🇬",lat:10,lng:8},
+  {name:"North Korea",flag:"🇰🇵",lat:40,lng:127},
+  {name:"North Macedonia",flag:"🇲🇰",lat:41.6,lng:21.7},
+  {name:"Norway",flag:"🇳🇴",lat:60.5,lng:8.5},
+  {name:"Oman",flag:"🇴🇲",lat:21,lng:57},
+  {name:"Pakistan",flag:"🇵🇰",lat:30,lng:70},
+  {name:"Panama",flag:"🇵🇦",lat:8.5,lng:-80.8},
+  {name:"Papua New Guinea",flag:"🇵🇬",lat:-6,lng:144},
+  {name:"Paraguay",flag:"🇵🇾",lat:-23.4,lng:-58.4},
+  {name:"Peru",flag:"🇵🇪",lat:-10,lng:-76},
+  {name:"Philippines",flag:"🇵🇭",lat:13,lng:122},
+  {name:"Poland",flag:"🇵🇱",lat:51.9,lng:19.1},
+  {name:"Portugal",flag:"🇵🇹",lat:39.4,lng:-8},
+  {name:"Qatar",flag:"🇶🇦",lat:25.3,lng:51.2},
+  {name:"Romania",flag:"🇷🇴",lat:45.9,lng:24.9},
+  {name:"Russia",flag:"🇷🇺",lat:60,lng:100},
+  {name:"Rwanda",flag:"🇷🇼",lat:-1.9,lng:29.9},
+  {name:"Saudi Arabia",flag:"🇸🇦",lat:24,lng:45},
+  {name:"Senegal",flag:"🇸🇳",lat:14,lng:-14},
+  {name:"Serbia",flag:"🇷🇸",lat:44,lng:21},
+  {name:"Sierra Leone",flag:"🇸🇱",lat:8.5,lng:-11.8},
+  {name:"Slovakia",flag:"🇸🇰",lat:48.7,lng:19.7},
+  {name:"Slovenia",flag:"🇸🇮",lat:46.1,lng:14.8},
+  {name:"Somalia",flag:"🇸🇴",lat:6,lng:46},
+  {name:"South Africa",flag:"🇿🇦",lat:-29,lng:25},
+  {name:"South Korea",flag:"🇰🇷",lat:36,lng:128},
+  {name:"South Sudan",flag:"🇸🇸",lat:7,lng:30},
+  {name:"Spain",flag:"🇪🇸",lat:40,lng:-3},
+  {name:"Sri Lanka",flag:"🇱🇰",lat:7.9,lng:80.8},
+  {name:"Sudan",flag:"🇸🇩",lat:15,lng:30},
+  {name:"Sweden",flag:"🇸🇪",lat:62,lng:15},
+  {name:"Switzerland",flag:"🇨🇭",lat:47,lng:8},
+  {name:"Syria",flag:"🇸🇾",lat:35,lng:38},
+  {name:"Taiwan",flag:"🇹🇼",lat:23.7,lng:121},
+  {name:"Tajikistan",flag:"🇹🇯",lat:39,lng:71},
+  {name:"Tanzania",flag:"🇹🇿",lat:-6,lng:35},
+  {name:"Thailand",flag:"🇹🇭",lat:15,lng:101},
+  {name:"Timor-Leste",flag:"🇹🇱",lat:-8.9,lng:125.7},
+  {name:"Togo",flag:"🇹🇬",lat:8,lng:1.2},
+  {name:"Tunisia",flag:"🇹🇳",lat:34,lng:9},
+  {name:"Turkey",flag:"🇹🇷",lat:39,lng:35},
+  {name:"Turkmenistan",flag:"🇹🇲",lat:39,lng:59},
+  {name:"Uganda",flag:"🇺🇬",lat:1,lng:32},
+  {name:"Ukraine",flag:"🇺🇦",lat:49,lng:32},
+  {name:"United Arab Emirates",flag:"🇦🇪",lat:24,lng:54},
+  {name:"United Kingdom",flag:"🇬🇧",lat:54,lng:-2},
+  {name:"United States",flag:"🇺🇸",lat:38,lng:-97},
+  {name:"Uruguay",flag:"🇺🇾",lat:-33,lng:-56},
+  {name:"Uzbekistan",flag:"🇺🇿",lat:41,lng:64},
+  {name:"Venezuela",flag:"🇻🇪",lat:8,lng:-66},
+  {name:"Vietnam",flag:"🇻🇳",lat:16,lng:108},
+  {name:"Yemen",flag:"🇾🇪",lat:15,lng:48},
+  {name:"Zambia",flag:"🇿🇲",lat:-15,lng:28},
+  {name:"Zimbabwe",flag:"🇿🇼",lat:-20,lng:30},
+];
+
+// ─── Game State ───────────────────────────────────────────────────────────────
+const todayIndex = Math.floor(Date.now() / 86400000) % COUNTRIES.length;
+let target = COUNTRIES[todayIndex];
+let guesses = [];
+let won = false;
+let streak = parseInt(localStorage.getItem('btrcc_streak') || '0');
+let played = parseInt(localStorage.getItem('btrcc_played') || '0');
+let acSelected = -1;
+
+// ─── Haversine distance ───────────────────────────────────────────────────────
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// Bearing for direction arrow
+function bearing(lat1, lon1, lat2, lon2) {
+  const dLon = (lon2-lon1)*Math.PI/180;
+  const y = Math.sin(dLon)*Math.cos(lat2*Math.PI/180);
+  const x = Math.cos(lat1*Math.PI/180)*Math.sin(lat2*Math.PI/180) - Math.sin(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.cos(dLon);
+  const brng = (Math.atan2(y,x)*180/Math.PI+360)%360;
+  return brng;
+}
+
+function bearingToArrow(deg) {
+  const dirs = ['↑','↗','→','↘','↓','↙','←','↖'];
+  return dirs[Math.round(deg/45)%8];
+}
+
+// Distance → heat class (0-8, hot, win)
+function heatClass(dist) {
+  if(dist===0) return 'heat-win';
+  if(dist<500) return 'heat-hot';
+  if(dist<1000) return 'heat-8';
+  if(dist<2000) return 'heat-7';
+  if(dist<3000) return 'heat-6';
+  if(dist<4500) return 'heat-5';
+  if(dist<6000) return 'heat-4';
+  if(dist<8000) return 'heat-3';
+  if(dist<12000) return 'heat-2';
+  if(dist<16000) return 'heat-1';
+  return 'heat-0';
+}
+
+function heatEmoji(cls) {
+  const map = {'heat-win':'✓','heat-hot':'🔥','heat-8':'◉','heat-7':'◉','heat-6':'◎','heat-5':'◎','heat-4':'〰','heat-3':'〰','heat-2':'❄','heat-1':'❄','heat-0':'❄'};
+  return map[cls]||'';
+}
+
+// ─── Globe pulse ──────────────────────────────────────────────────────────────
+function globePulse() {
+  const svg = document.getElementById('globe-svg');
+  svg.classList.add('pulse');
+  setTimeout(()=>svg.classList.remove('pulse'),800);
+}
+
+function updateGlobeColor(hcls) {
+  // Update land colour based on last (hottest) guess
+  const colorMap = {
+    'heat-0':'#061020','heat-1':'#081830','heat-2':'#0a2040','heat-3':'#0c2c5a',
+    'heat-4':'#0e3878','heat-5':'#1050a0','heat-6':'#1465c8','heat-7':'#1880e8',
+    'heat-8':'#20a0ff','heat-hot':'#00d4ff','heat-win':'#00ff88'
+  };
+  const stroke = {'heat-0':'#142040','heat-1':'#1a3060','heat-2':'#204070','heat-3':'#285090','heat-4':'#3068a8','heat-5':'#3888c8','heat-6':'#40a8e8','heat-7':'#50c0f8','heat-8':'#70d8ff','heat-hot':'#40efff','heat-win':'#40ffaa'};
+  const col = colorMap[hcls]||'#0d3060';
+  const stk = stroke[hcls]||'#1e5a9a';
+  document.querySelectorAll('.globe-land').forEach(el=>{
+    el.style.fill=col;
+    el.style.stroke=stk;
+  });
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('stat-guesses').textContent = guesses.length;
+  document.getElementById('stat-streak').textContent = streak||'—';
+  document.getElementById('stat-played').textContent = played;
+  document.getElementById('guess-count-label').textContent = guesses.length + (guesses.length===1?' guess':' guesses');
+}
+
+// ─── Guess submission ─────────────────────────────────────────────────────────
+function submitGuess(name) {
+  if(won) return;
+  const input = document.getElementById('country-input');
+  const found = COUNTRIES.find(c=>c.name.toLowerCase()===name.toLowerCase());
+  if(!found) { showToast('Country not found — try another!'); return; }
+  if(guesses.find(g=>g.name===found.name)) { showToast('Already guessed!'); return; }
+
+  const dist = haversine(found.lat, found.lng, target.lat, target.lng);
+  const isWin = found.name === target.name;
+  const hcls = isWin ? 'heat-win' : heatClass(dist);
+  const brng = bearing(found.lat, found.lng, target.lat, target.lng);
+  const arrow = isWin ? '✓' : bearingToArrow(brng);
+
+  guesses.unshift({name:found.name, flag:found.flag, dist:Math.round(dist), hcls, arrow, isWin});
+  updateStats();
+  updateGlobeColor(hcls);
+  globePulse();
+  renderGuesses();
+
+  input.value='';
+  closeAutocomplete();
+
+  if(isWin) {
+    won = true;
+    played++;
+    streak++;
+    localStorage.setItem('btrcc_streak', streak);
+    localStorage.setItem('btrcc_played', played);
+    updateStats();
+    setTimeout(()=>showWin(found), 600);
+  }
+}
+
+function renderGuesses() {
+  const list = document.getElementById('guesses-list');
+  list.innerHTML = guesses.map((g,i)=>`
+    <div class="guess-row" style="animation-delay:${i===0?'0ms':'0ms'}">
+      <div class="guess-flag">${g.flag}</div>
+      <div class="guess-name">${g.name}</div>
+      <div class="guess-heat ${g.hcls}">${g.isWin?'✓':heatEmoji(g.hcls)}</div>
+      <div class="guess-dist">
+        <span class="km">${g.isWin?'0 km':g.dist.toLocaleString()+' km'}</span>
+        <span class="dir">${g.isWin?'TARGET':g.arrow+' away'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showWin(country) {
+  const banner = document.getElementById('win-banner');
+  document.getElementById('win-country-name').textContent = country.flag + ' ' + country.name;
+  document.getElementById('win-in-guesses').textContent = `FOUND IN ${guesses.length} GUESS${guesses.length===1?'':'ES'}`;
+  banner.classList.add('show');
+  document.getElementById('country-input').disabled = true;
+  document.getElementById('submit-btn').disabled = true;
+}
+
+// ─── Autocomplete ─────────────────────────────────────────────────────────────
+const input = document.getElementById('country-input');
+const acBox = document.getElementById('autocomplete');
+
+input.addEventListener('input', ()=>{
+  const q = input.value.trim().toLowerCase();
+  acSelected = -1;
+  if(!q) { closeAutocomplete(); return; }
+  const matches = COUNTRIES.filter(c=>c.name.toLowerCase().startsWith(q)).slice(0,6);
+  if(!matches.length) { closeAutocomplete(); return; }
+  acBox.innerHTML = matches.map((c,i)=>`
+    <div class="autocomplete-item" data-name="${c.name}" data-index="${i}">
+      <span class="flag">${c.flag}</span>${c.name}
+    </div>
+  `).join('');
+  acBox.style.display='block';
+  acBox.querySelectorAll('.autocomplete-item').forEach(el=>{
+    el.addEventListener('click',()=>{ submitGuess(el.dataset.name); });
+  });
+});
+
+input.addEventListener('keydown', e=>{
+  const items = acBox.querySelectorAll('.autocomplete-item');
+  if(e.key==='ArrowDown'){ e.preventDefault(); acSelected=Math.min(acSelected+1,items.length-1); highlightAC(items); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); acSelected=Math.max(acSelected-1,-1); highlightAC(items); }
+  else if(e.key==='Enter'){
+    if(acSelected>=0 && items[acSelected]) submitGuess(items[acSelected].dataset.name);
+    else submitGuess(input.value.trim());
+  }
+  else if(e.key==='Escape') closeAutocomplete();
+});
+
+function highlightAC(items) {
+  items.forEach((el,i)=>el.classList.toggle('active',i===acSelected));
+}
+
+function closeAutocomplete() {
+  acBox.style.display='none';
+  acBox.innerHTML='';
+  acSelected=-1;
+}
+
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.search-wrap')) closeAutocomplete();
+});
+
+document.getElementById('submit-btn').addEventListener('click',()=>submitGuess(input.value.trim()));
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
+document.getElementById('how-btn').addEventListener('click',()=>{
+  document.getElementById('modal-overlay').classList.add('open');
+});
+document.getElementById('modal-close').addEventListener('click',()=>{
+  document.getElementById('modal-overlay').classList.remove('open');
+});
+document.getElementById('modal-overlay').addEventListener('click',e=>{
+  if(e.target===document.getElementById('modal-overlay'))
+    document.getElementById('modal-overlay').classList.remove('open');
+});
+
+// ─── New game (dev) ───────────────────────────────────────────────────────────
+document.getElementById('new-btn').addEventListener('click',()=>{
+  target = COUNTRIES[Math.floor(Math.random()*COUNTRIES.length)];
+  guesses=[];
+  won=false;
+  document.getElementById('country-input').disabled=false;
+  document.getElementById('submit-btn').disabled=false;
+  document.getElementById('win-banner').classList.remove('show');
+  document.getElementById('country-input').value='';
+  renderGuesses();
+  updateStats();
+  document.querySelectorAll('.globe-land').forEach(el=>{ el.style.fill=''; el.style.stroke=''; });
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+updateStats();
+
+// Show how to play on first load
+if(!localStorage.getItem('btrcc_seen')) {
+  document.getElementById('modal-overlay').classList.add('open');
+  localStorage.setItem('btrcc_seen','1');
+}
+</script>
+</body>
+</html>
